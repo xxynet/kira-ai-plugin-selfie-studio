@@ -1,0 +1,20 @@
+{
+  "display_name": "Selfie Studio",
+  "plugin_id": "kira-ai-plugin-selfie-studio",
+  "version": "1.0.0",
+  "author": "xxynet",
+  "description": "Wardrobe and scene library for character selfies. Upload outfits and scenes from a WebUI page; the character picks them up when taking selfies.",
+  "repo": "https://github.com/xxynet/kira-ai-plugin-selfie-studio",
+  "icon": "icon.svg",
+  "tags": ["selfie", "image", "wardrobe", "webui"],
+  "locales": {
+    "zh": {
+      "display_name": "自拍工坊",
+      "description": "为角色自拍服务的衣橱与场景库：在 WebUI 上传穿搭与场景，角色自拍时会自动穿上、走进这些画面。"
+    },
+    "en": {
+      "display_name": "Selfie Studio",
+      "description": "Wardrobe and scene library for character selfies. Upload outfits and scenes from a WebUI page; the character picks them up when taking selfies."
+    }
+  }
+}

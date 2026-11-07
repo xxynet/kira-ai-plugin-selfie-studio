@@ -1,0 +1,14 @@
+{
+  "inject_catalog": {
+    "type": "switch",
+    "name": "向角色播报衣橱",
+    "default": true,
+    "hint": "在系统提示中附加当前可用的穿搭与场景目录，角色便会主动用 <dressup> 标签换装自拍。",
+    "locales": {
+      "en": {
+        "name": "Announce wardrobe to the character",
+        "hint": "Append the current outfit and scene catalog to the system prompt so the character can dress up via the <dressup> tag."
+      }
+    }
+  }
+}

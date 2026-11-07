@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Runtime data belongs to data/plugin_data/<plugin_id>/ — never here
+uploads/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.idea/
+.vscode/
+*.swp

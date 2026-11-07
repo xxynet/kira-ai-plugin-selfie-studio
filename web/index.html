@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Selfie Studio</title>
+  <meta name="color-scheme" content="light dark">
+  <script src="/plugin-bridge.js"></script>
+  <script src="./lucide.min.js"></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="shell">
+
+    <aside class="side">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"><i data-lucide="aperture"></i></span>
+        <div class="brand-text">
+          <span class="brand-name">Selfie Studio</span>
+          <span class="brand-sub" data-i18n="brand.sub">自拍工坊</span>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav">
+        <button class="nav-item is-active" type="button" data-view="wardrobe">
+          <i data-lucide="shirt"></i><span data-i18n="nav.wardrobe">衣橱</span>
+          <em class="nav-count" id="count-wardrobe"></em>
+        </button>
+        <button class="nav-item" type="button" data-view="scenes">
+          <i data-lucide="images"></i><span data-i18n="nav.scenes">场景</span>
+          <em class="nav-count" id="count-scenes"></em>
+        </button>
+        <button class="nav-item" type="button" data-view="studio" id="nav-studio">
+          <i data-lucide="camera"></i><span data-i18n="nav.studio">试拍</span>
+        </button>
+        <button class="nav-item" type="button" data-view="catalog">
+          <i data-lucide="text-quote"></i><span data-i18n="nav.catalog">目录播报</span>
+        </button>
+      </nav>
+
+      <div class="side-foot">
+        <p class="side-note" data-i18n="brand.note">穿搭与场景会在角色自拍时作为参考图使用</p>
+      </div>
+    </aside>
+
+    <main class="main">
+
+      <!-- ── Wardrobe ─────────────────────────────────────────────── -->
+      <section class="view is-active" data-view="wardrobe">
+        <header class="view-head">
+          <div class="head-copy">
+            <h1 class="view-title" data-i18n="wardrobe.title">衣橱</h1>
+            <p class="view-sub" data-i18n="wardrobe.sub">管理角色的穿搭单品，自拍时会自动穿上</p>
+          </div>
+          <div class="head-actions">
+            <label class="search-box">
+              <i data-lucide="search"></i>
+              <input id="wardrobe-search" type="search" data-i18n-ph="actions.search" placeholder="搜索名称或备注" autocomplete="off">
+            </label>
+            <button class="primary-btn" type="button" id="wardrobe-upload">
+              <i data-lucide="plus"></i><span data-i18n="actions.upload">上传</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="chip-row" id="wardrobe-filters" role="tablist"></div>
+        <div class="grid grid-wardrobe" id="wardrobe-grid"></div>
+      </section>
+
+      <!-- ── Scenes ───────────────────────────────────────────────── -->
+      <section class="view" data-view="scenes">
+        <header class="view-head">
+          <div class="head-copy">
+            <h1 class="view-title" data-i18n="scenes.title">场景</h1>
+            <p class="view-sub" data-i18n="scenes.sub">管理自拍的环境与地点参考</p>
+          </div>
+          <div class="head-actions">
+            <label class="search-box">
+              <i data-lucide="search"></i>
+              <input id="scenes-search" type="search" data-i18n-ph="actions.search" placeholder="搜索名称或备注" autocomplete="off">
+            </label>
+            <button class="primary-btn" type="button" id="scenes-upload">
+              <i data-lucide="plus"></i><span data-i18n="actions.upload">上传</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="chip-row" id="scenes-filters" role="tablist"></div>
+        <div class="grid grid-scenes" id="scenes-grid"></div>
+      </section>
+
+      <!-- ── Test shot ────────────────────────────────────────────── -->
+      <section class="view" data-view="studio">
+        <header class="view-head">
+          <div class="head-copy">
+            <h1 class="view-title" data-i18n="studio.title">试拍</h1>
+            <p class="view-sub" data-i18n="studio.sub">选择穿搭与场景，立即生成一张预览自拍</p>
+          </div>
+        </header>
+
+        <div class="studio-layout">
+          <form class="studio-form" id="studio-form">
+            <div class="field">
+              <div class="field-label">
+                <span data-i18n="studio.pickOutfit">选择穿搭</span>
+                <em class="field-hint" data-i18n="studio.multi">可多选</em>
+              </div>
+              <div class="pick-grid" id="studio-outfits"></div>
+            </div>
+
+            <div class="field">
+              <div class="field-label">
+                <span data-i18n="studio.pickScene">选择场景</span>
+                <em class="field-hint" data-i18n="studio.single">单选</em>
+              </div>
+              <div class="pick-grid" id="studio-scenes"></div>
+            </div>
+
+            <div class="field">
+              <label class="field-label" for="studio-prompt"><span data-i18n="studio.pose">自拍描述</span></label>
+              <textarea id="studio-prompt" rows="3" data-i18n-ph="studio.posePh"
+                placeholder="例：坐在落地窗边，手捧热拿铁，侧头看向窗外的午后光"></textarea>
+            </div>
+
+            <div class="studio-foot">
+              <span class="mono-hint" data-i18n="studio.refOrder">参考图顺序：人设 → 穿搭 → 场景</span>
+              <button class="accent-btn" type="submit" id="studio-shoot">
+                <i data-lucide="aperture"></i><span data-i18n="studio.shoot">按下快门</span>
+              </button>
+            </div>
+          </form>
+
+          <div class="studio-result" id="studio-result">
+            <div class="result-empty">
+              <span class="empty-orb"><i data-lucide="camera"></i></span>
+              <p class="empty-title" data-i18n="studio.emptyTitle">还没有作品</p>
+              <p class="empty-sub" data-i18n="studio.emptySub">选好穿搭与场景，按下快门试一张</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Catalog ──────────────────────────────────────────────── -->
+      <section class="view" data-view="catalog">
+        <header class="view-head">
+          <div class="head-copy">
+            <h1 class="view-title" data-i18n="catalog.title">目录播报</h1>
+            <p class="view-sub" data-i18n="catalog.sub">每轮对话注入角色系统提示的衣橱目录，角色据此使用 dressup 标签</p>
+          </div>
+          <div class="head-actions">
+            <span class="state-pill" id="catalog-state"></span>
+          </div>
+        </header>
+
+        <div class="catalog-card">
+          <pre class="catalog-text" id="catalog-text"></pre>
+        </div>
+        <p class="catalog-note" data-i18n="catalog.hint">开关位于 WebUI 的插件设置页。停用的单品不会出现在目录中。</p>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── Upload dialog ───────────────────────────────────────────── -->
+  <div class="dialog-root" id="dialog-upload" hidden>
+    <div class="dialog-backdrop" data-close></div>
+    <div class="dialog" role="dialog" aria-modal="true">
+      <header class="dialog-head">
+        <h2 class="dialog-title" id="upload-title">上传到衣橱</h2>
+        <button class="icon-btn" type="button" data-close aria-label="close"><i data-lucide="x"></i></button>
+      </header>
+
+      <div class="dropzone" id="upload-dropzone" tabindex="0">
+        <i data-lucide="image-plus"></i>
+        <p class="drop-title" data-i18n="upload.drop">拖拽图片到此处，或点击选择</p>
+        <p class="drop-sub" data-i18n="upload.formats">支持 PNG · JPEG · WebP，单张不超过 10 MB</p>
+        <input type="file" id="upload-input" accept="image/png,image/jpeg,image/webp" multiple hidden>
+      </div>
+
+      <div class="queue" id="upload-queue"></div>
+
+      <footer class="dialog-foot">
+        <button class="ghost-btn" type="button" data-close><span data-i18n="actions.cancel">取消</span></button>
+        <button class="primary-btn" type="button" id="upload-start" disabled>
+          <i data-lucide="upload"></i><span data-i18n="upload.start">开始上传</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ── Edit dialog ─────────────────────────────────────────────── -->
+  <div class="dialog-root" id="dialog-edit" hidden>
+    <div class="dialog-backdrop" data-close></div>
+    <div class="dialog dialog-sm" role="dialog" aria-modal="true">
+      <header class="dialog-head">
+        <h2 class="dialog-title" id="edit-title">编辑单品</h2>
+        <button class="icon-btn" type="button" data-close aria-label="close"><i data-lucide="x"></i></button>
+      </header>
+
+      <div class="edit-body">
+        <div class="edit-preview"><img id="edit-image" alt=""></div>
+        <div class="edit-fields">
+          <label class="field-label" for="edit-name"><span data-i18n="edit.name">名称</span></label>
+          <input id="edit-name" type="text" maxlength="40" autocomplete="off">
+
+          <label class="field-label" for="edit-category"><span data-i18n="edit.category">类别</span></label>
+          <select id="edit-category"></select>
+
+          <label class="field-label" for="edit-note"><span data-i18n="edit.note">备注</span></label>
+          <textarea id="edit-note" rows="2" maxlength="200" data-i18n-ph="edit.notePh"
+            placeholder="给角色的提示，例如颜色、材质、氛围"></textarea>
+
+          <label class="switch-row">
+            <span data-i18n="edit.inUse">参与自拍</span>
+            <span class="switch"><input type="checkbox" id="edit-enabled"><i></i></span>
+          </label>
+        </div>
+      </div>
+
+      <footer class="dialog-foot dialog-foot-split">
+        <button class="danger-ghost-btn" type="button" id="edit-delete">
+          <i data-lucide="trash-2"></i><span data-i18n="actions.delete">删除</span>
+        </button>
+        <span class="foot-gap"></span>
+        <button class="ghost-btn" type="button" data-close><span data-i18n="actions.cancel">取消</span></button>
+        <button class="primary-btn" type="button" id="edit-save">
+          <i data-lucide="check"></i><span data-i18n="actions.save">保存</span>
+        </button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ── Confirm dialog ──────────────────────────────────────────── -->
+  <div class="dialog-root" id="dialog-confirm" hidden>
+    <div class="dialog-backdrop" data-close></div>
+    <div class="dialog dialog-xs" role="dialog" aria-modal="true">
+      <header class="dialog-head">
+        <h2 class="dialog-title" id="confirm-title"></h2>
+        <button class="icon-btn" type="button" data-close aria-label="close"><i data-lucide="x"></i></button>
+      </header>
+      <p class="confirm-text" id="confirm-text"></p>
+      <footer class="dialog-foot">
+        <button class="ghost-btn" type="button" data-close><span data-i18n="actions.cancel">取消</span></button>
+        <button class="danger-btn" type="button" id="confirm-accept"><span data-i18n="actions.delete">删除</span></button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toasts" aria-live="polite"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
