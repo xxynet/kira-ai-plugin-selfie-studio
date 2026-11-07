@@ -1,7 +1,7 @@
 {
   "display_name": "Selfie Studio",
   "plugin_id": "kira-ai-plugin-selfie-studio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "xxynet",
   "description": "Wardrobe and scene library for character selfies. Upload outfits and scenes from a WebUI page; the character picks them up when taking selfies.",
   "repo": "https://github.com/xxynet/kira-ai-plugin-selfie-studio",

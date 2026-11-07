@@ -7,7 +7,7 @@ pieces (tops, bottoms, dresses, footwear, accessories) and scenes from a WebUI
 page; the character picks them up as extra reference images whenever a selfie
 calls for them.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 
 ## Features
 

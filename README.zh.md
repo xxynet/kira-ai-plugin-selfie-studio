@@ -4,7 +4,7 @@
 
 为角色自拍服务的衣橱与场景库。在 WebUI 页面上传穿搭单品（上装 / 下装 / 连衣裙 / 鞋履 / 配饰）与场景，角色自拍时会自动把它们作为附加参考图。
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 
 ## 功能
 
