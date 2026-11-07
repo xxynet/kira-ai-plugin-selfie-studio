@@ -30,7 +30,7 @@ from core.plugin.handlers import Priority
 from core.prompt_manager import Prompt
 from core.utils.common_utils import image_to_base64, image_to_image
 
-from . import storage
+from . import compose, storage
 
 PLUGIN_ID = "kira-ai-plugin-selfie-studio"
 
@@ -125,6 +125,37 @@ class SelfieStudioPlugin(BasePlugin):
         mime = await asyncio.to_thread(_reference_mime, b64_data)
         return Image(image=b64_data, name=name, mime=mime)
 
+    async def _build_references(self, persona_path: Path,
+                                outfits: list[dict], scenes: list[dict]) -> list[Image]:
+        """Persona reference first, then outfits (optionally merged), then scenes.
+
+        With ``merge_references`` enabled and more than one outfit, the pieces
+        are composed into a single labelled sheet so reference-count-limited
+        image models still see every piece. Composition failures fall back to
+        separate references.
+        """
+        references = [await self._load_reference(persona_path, persona_path.name)]
+        merge = bool((self.plugin_cfg or {}).get("merge_references", False))
+        remaining = outfits
+        if merge and len(outfits) > 1:
+            sheet = None
+            try:
+                sheet = await asyncio.to_thread(compose.compose_outfit_sheet, outfits)
+            except Exception as e:
+                logger.warning(f"[selfie-studio] failed to compose outfit sheet: {e}")
+            if sheet is not None:
+                b64_data = await asyncio.to_thread(
+                    lambda: base64.b64encode(sheet).decode("ascii"))
+                references.append(Image(image=b64_data, name="outfit-sheet", mime="image/jpeg"))
+                remaining = []
+        for record in remaining:
+            references.append(await self._load_reference(
+                storage.item_path(record), str(record.get("name") or record["file"])))
+        for record in scenes:
+            references.append(await self._load_reference(
+                storage.item_path(record), str(record.get("name") or record["file"])))
+        return references
+
     # ── LLM integration ───────────────────────────────────────────────────
 
     @register.tag("dressup", DRESSUP_TAG_DESCRIPTION, parent="msg")
@@ -144,13 +175,9 @@ class SelfieStudioPlugin(BasePlugin):
                 return []
 
             records = await asyncio.to_thread(storage.load_library)
-            references = [await self._load_reference(ref_file, ref_file.name)]
-            for record in self._resolve_records(records, "wardrobe", outfit or ""):
-                references.append(await self._load_reference(
-                    storage.item_path(record), str(record.get("name") or record["file"])))
-            for record in self._resolve_records(records, "scene", scene or ""):
-                references.append(await self._load_reference(
-                    storage.item_path(record), str(record.get("name") or record["file"])))
+            outfits = self._resolve_records(records, "wardrobe", outfit or "")
+            scenes = self._resolve_records(records, "scene", scene or "")
+            references = await self._build_references(ref_file, outfits, scenes)
 
             img_res = await image_to_image(client, value, image=references)
             if img_res:
@@ -306,18 +333,16 @@ class SelfieStudioPlugin(BasePlugin):
 
             records = await asyncio.to_thread(storage.load_library)
             by_id = {r["id"]: r for r in records}
-            references = [await self._load_reference(ref_file, ref_file.name)]
+            outfits = []
             for item_id in payload.get("outfit_ids") or []:
                 record = by_id.get(str(item_id))
                 if record and record.get("kind") == "wardrobe" and record.get("enabled"):
-                    references.append(await self._load_reference(
-                        storage.item_path(record), str(record.get("name") or record["file"])))
-            scene_id = str(payload.get("scene_id") or "")
-            if scene_id and scene_id in by_id:
-                record = by_id[scene_id]
-                if record.get("kind") == "scene" and record.get("enabled"):
-                    references.append(await self._load_reference(
-                        storage.item_path(record), str(record.get("name") or record["file"])))
+                    outfits.append(record)
+            scenes = []
+            scene_record = by_id.get(str(payload.get("scene_id") or ""))
+            if scene_record and scene_record.get("kind") == "scene" and scene_record.get("enabled"):
+                scenes.append(scene_record)
+            references = await self._build_references(ref_file, outfits, scenes)
 
             img_res = await image_to_image(client, prompt, image=references)
             if not img_res:

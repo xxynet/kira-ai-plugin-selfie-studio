@@ -24,6 +24,7 @@ from core.plugin import registry  # noqa: E402
 
 main = importlib.import_module("smoke_selfie_studio.main")
 storage = importlib.import_module("smoke_selfie_studio.storage")
+compose = importlib.import_module("smoke_selfie_studio.compose")
 
 comp = registry._plugin_components.get(PLUGIN_ID)
 assert comp is not None, "components not registered"
@@ -92,6 +93,22 @@ async def flow():
         raise AssertionError("traversal accepted")
     except storage.StorageError:
         pass
+
+    # Outfit sheet composition (2 and 3 cells, mixed aspect ratios)
+    sheet_records = []
+    for size, name in (((300, 400), "白衬衫"), ((500, 320), "帆布鞋"), ((800, 1000), "牛仔外套")):
+        b = BytesIO()
+        Image.new("RGB", size, (120, 140, 160)).save(b, format="JPEG")
+        sheet_records.append(await asyncio.to_thread(
+            storage.add_item, "wardrobe", b.getvalue(), name, "top", ""))
+    for records, min_width in ((sheet_records[:2], 2), (sheet_records, 3)):
+        sheet = await asyncio.to_thread(compose.compose_outfit_sheet, records)
+        assert sheet is not None
+        with Image.open(BytesIO(sheet)) as sheet_image:
+            assert sheet_image.format == "JPEG"
+            assert sheet_image.width >= min_width * 100
+            assert sheet_image.height >= 400
+    assert await asyncio.to_thread(compose.compose_outfit_sheet, []) is None
 
     await asyncio.to_thread(storage.delete_item, record["id"])
     assert await asyncio.to_thread(storage.get_item, record["id"]) is None

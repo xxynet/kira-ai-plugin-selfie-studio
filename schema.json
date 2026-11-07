@@ -10,5 +10,17 @@
         "hint": "Append the current outfit and scene catalog to the system prompt so the character can dress up via the <dressup> tag."
       }
     }
+  },
+  "merge_references": {
+    "type": "switch",
+    "name": "合并穿搭参考图",
+    "default": false,
+    "hint": "自拍选中多件穿搭时，用 Pillow 拼成一张带名称标签的穿搭单再传给模型（场景保持独立），适合参考图数量有限的图像模型。",
+    "locales": {
+      "en": {
+        "name": "Merge outfit references",
+        "hint": "Compose multiple selected outfits into a single labelled sheet with Pillow before sending (scenes stay separate). Useful for image models with a limited reference count."
+      }
+    }
   }
 }
