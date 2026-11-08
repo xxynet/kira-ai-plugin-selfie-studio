@@ -110,6 +110,18 @@ async def flow():
             assert sheet_image.height >= 400
     assert await asyncio.to_thread(compose.compose_outfit_sheet, []) is None
 
+    # EXIF orientation must be applied before composing (phone portrait photos)
+    b = BytesIO()
+    exif = Image.Exif()
+    exif[274] = 6  # display = stored pixels rotated 90 degrees clockwise
+    Image.new("RGB", (200, 400), (90, 120, 90)).save(b, format="JPEG", exif=exif)
+    rotated_record = await asyncio.to_thread(
+        storage.add_item, "wardrobe", b.getvalue(), "竖拍照片", "top", "")
+    cell = await asyncio.to_thread(compose._load_cell, rotated_record)
+    assert cell is not None and cell.size == (400, 200), \
+        f"EXIF orientation not applied: {cell.size if cell else None}"
+    await asyncio.to_thread(storage.delete_item, rotated_record["id"])
+
     await asyncio.to_thread(storage.delete_item, record["id"])
     assert await asyncio.to_thread(storage.get_item, record["id"]) is None
     assert not path.exists()

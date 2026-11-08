@@ -9,7 +9,7 @@ CJK-capable system font is available) — so the model still sees every piece.
 
 import io
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from . import storage
 
@@ -44,7 +44,11 @@ def _label_font(size: int):
 def _load_cell(record: dict) -> Image.Image | None:
     try:
         path = storage.item_path(record)
-        with Image.open(path) as image:
+        with Image.open(path) as source:
+            # Phone photos often carry a non-default EXIF orientation; the
+            # output sheet drops EXIF metadata, so transpose before composing
+            # or such outfits end up sideways in the reference.
+            image = ImageOps.exif_transpose(source)
             image.load()
             rgba = image.convert("RGBA")
     except (OSError, ValueError):
