@@ -7,9 +7,12 @@ resized to a common height, the item name written underneath (when a
 CJK-capable system font is available) — so the model still sees every piece.
 """
 
+import functools
 import io
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+from core.plugin import logger
 
 from . import storage
 
@@ -31,6 +34,7 @@ _FONT_CANDIDATES = (
 )
 
 
+@functools.lru_cache(maxsize=None)
 def _label_font(size: int):
     """Return the first available CJK-capable font, or None to skip labels."""
     for candidate in _FONT_CANDIDATES:
@@ -51,7 +55,7 @@ def _load_cell(record: dict) -> Image.Image | None:
             image = ImageOps.exif_transpose(source)
             image.load()
             rgba = image.convert("RGBA")
-    except (OSError, ValueError):
+    except (OSError, ValueError, Image.DecompressionBombError):
         return None
     rgba.thumbnail((CELL_MAX_WIDTH, CELL_HEIGHT), Image.LANCZOS)
     return rgba
@@ -68,35 +72,47 @@ def _fit_text(draw: ImageDraw.ImageDraw, text: str, font, max_width: int) -> str
 def compose_outfit_sheet(records: list[dict]) -> bytes | None:
     """Render wardrobe records into one JPEG sheet.
 
-    Records that cannot be read are skipped; returns ``None`` when nothing
-    is composable, letting callers fall back to separate references.
+    Records that cannot be read are skipped with a warning; returns ``None``
+    when nothing is composable, letting callers fall back to separate
+    references.
     """
     cells: list[tuple[str, Image.Image]] = []
+    skipped: list[str] = []
     for record in records:
         image = _load_cell(record)
         if image is not None:
             cells.append((str(record.get("name") or ""), image))
+        else:
+            skipped.append(str(record.get("name") or record.get("file") or "?"))
     if not cells:
         return None
+    if skipped:
+        logger.warning("[selfie-studio] skipped unreadable outfits while "
+                       "composing sheet: " + ", ".join(skipped))
+
+    font = _label_font(28)
+    if font is None:
+        logger.debug("[selfie-studio] no CJK-capable font found, sheet labels skipped")
 
     rows = [cells[i:i + PER_ROW] for i in range(0, len(cells), PER_ROW)]
-    font = _label_font(28)
-
-    row_heights: list[int] = []
-    row_widths: list[int] = []
+    measured = []
     for row in rows:
         image_height = max(im.height for _, im in row)
-        width = sum(im.width for _, im in row) + GUTTER * (len(row) - 1)
-        row_heights.append(image_height + LABEL_HEIGHT)
-        row_widths.append(width)
-    sheet_width = max(row_widths) + MARGIN * 2
-    sheet_height = sum(row_heights) + GUTTER * (len(rows) - 1) + MARGIN * 2
+        measured.append((
+            row,
+            image_height,
+            sum(im.width for _, im in row) + GUTTER * (len(row) - 1),
+            image_height + LABEL_HEIGHT,
+        ))
+
+    sheet_width = max(width for _, _, width, _ in measured) + MARGIN * 2
+    sheet_height = (sum(height for _, _, _, height in measured)
+                    + GUTTER * (len(measured) - 1) + MARGIN * 2)
 
     sheet = Image.new("RGB", (sheet_width, sheet_height), BACKGROUND)
     draw = ImageDraw.Draw(sheet)
     y = MARGIN
-    for row, row_height, row_width in zip(rows, row_heights, row_widths):
-        image_height = max(im.height for _, im in row)
+    for row, image_height, row_width, row_height in measured:
         x = MARGIN + max(0, (sheet_width - MARGIN * 2 - row_width) // 2)
         for name, image in row:
             top = y + (image_height - image.height) // 2
