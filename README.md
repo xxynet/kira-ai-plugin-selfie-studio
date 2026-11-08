@@ -7,7 +7,7 @@ pieces (tops, bottoms, dresses, footwear, accessories) and scenes from a WebUI
 page; the character picks them up as extra reference images whenever a selfie
 calls for them.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 
 ## Features
 
@@ -39,6 +39,11 @@ The page follows the parent WebUI theme (light / dark) and language
   model's img2img — the same contract as the builtin `<selfie>` tag. When the
   catalog is empty or disabled, the character falls back to plain `<selfie>`.
 
+- **Reference merging (optional)** — with *Merge outfit references* enabled,
+  multiple outfits are composed into a single labelled contact sheet with
+  Pillow before sending (scenes stay separate), so image models with a
+  limited reference count still see every piece.
+
 - **Requirement** — the active persona must have a reference image set, and a
   default image model must be configured.
 
@@ -61,6 +66,8 @@ Accepted formats: PNG / JPEG / WebP, up to 10 MB each, 200 items max.
 
 - **Announce wardrobe to the character** — append the catalog to the system
   prompt each turn (default on).
+- **Merge outfit references** — compose multiple selected outfits into one
+  labelled sheet before sending (default off).
 
 ## Endpoints
 
